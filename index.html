@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tic Tac Toe</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: 85vh;
+      align-items: center;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    select, button {
+      margin: 10px;
+      padding: 5px 10px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 5px;
+      position: relative;
+      margin-bottom: 10px;
+    }
+
+    .cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      background: #f1f1f1;
+      cursor: pointer;
+      user-select: none;
+      width: 100px;
+      height: 100px;
+      border: 2px solid #ccc;
+    }
+
+    .strike {
+      position: absolute;
+      background: red;
+      height: 4px;
+      width: 190px;
+      top: 0;
+      left: 0;
+      transform-origin: left center;
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+
+    .show {
+      transform: scaleX(1);
+    }
+  </style>
+</head>
+<body>
+  <h1>Tic Tac Toe</h1>
+  <select id="mode">
+    <option value="friend">Play with Friend</option>
+    <option value="computer">Play with Computer</option>
+  </select>
+  <div class="grid" id="grid">
+    <div class="cell" data-index="0"></div>
+    <div class="cell" data-index="1"></div>
+    <div class="cell" data-index="2"></div>
+    <div class="cell" data-index="3"></div>
+    <div class="cell" data-index="4"></div>
+    <div class="cell" data-index="5"></div>
+    <div class="cell" data-index="6"></div>
+    <div class="cell" data-index="7"></div>
+    <div class="cell" data-index="8"></div>
+    <div class="strike" id="strike"></div>
+  </div>
+  <button onclick="resetGame()">Reset Game</button>
+
+  <script>
+    const cells = document.querySelectorAll(".cell");
+    const strike = document.getElementById("strike");
+    const modeSelect = document.getElementById("mode");
+    let board = Array(9).fill("");
+    let currentPlayer = "X";
+    let gameOver = false;
+
+    const winCombos = [
+      [0,1,2], [3,4,5], [6,7,8], // rows
+      [0,3,6], [1,4,7], [2,5,8], // cols
+      [0,4,8], [2,4,6]           // diagonals
+    ];
+
+    cells.forEach(cell => {
+      cell.addEventListener("click", () => {
+        const idx = cell.dataset.index;
+        if (board[idx] || gameOver) return;
+
+        board[idx] = currentPlayer;
+        cell.textContent = currentPlayer;
+
+        const winner = checkWin();
+        if (winner) {
+          drawStrike(winner.line);
+          gameOver = true;
+        } else if (!board.includes("")) {
+          gameOver = true;
+        } else {
+          currentPlayer = currentPlayer === "X" ? "O" : "X";
+          if (modeSelect.value === "computer" && currentPlayer === "O") {
+            setTimeout(makeComputerMove, 300);
+          }
+        }
+      });
+    });
+
+    function makeComputerMove() {
+      let empty = board.map((v, i) => v === "" ? i : null).filter(v => v !== null);
+      let move = empty[Math.floor(Math.random() * empty.length)];
+      board[move] = "O";
+      cells[move].textContent = "O";
+      const winner = checkWin();
+      if (winner) {
+        drawStrike(winner.line);
+        gameOver = true;
+      } else if (!board.includes("")) {
+        gameOver = true;
+      }
+      currentPlayer = "X";
+    }
+
+    function checkWin() {
+      for (let [a, b, c] of winCombos) {
+        if (board[a] && board[a] === board[b] && board[b] === board[c]) {
+          return { player: board[a], line: [a, b, c] };
+        }
+      }
+      return null;
+    }
+
+    function drawStrike([a, b, c]) {
+      const positions = {
+        "012": { top: 30, left: 0, rotate: 0 },
+        "345": { top: 95, left: 0, rotate: 0 },
+        "678": { top: 160, left: 0, rotate: 0 },
+        "036": { top: 0, left: 30, rotate: 90 },
+        "147": { top: 0, left: 95, rotate: 90 },
+        "258": { top: 0, left: 160, rotate: 90 },
+        "048": { top: 0, left: 0, rotate: 45 },
+        "246": { top: 0, left: 0, rotate: -45 },
+      };
+      const key = [a, b, c].join("");
+      const pos = positions[key];
+      if (pos) {
+        strike.style.top = pos.top + "px";
+        strike.style.left = pos.left + "px";
+        strike.style.transform = `rotate(${pos.rotate}deg) scaleX(1)`;
+        strike.classList.add("show");
+      }
+    }
+
+    function resetGame() {
+      board.fill("");
+      cells.forEach(cell => cell.textContent = "");
+      strike.classList.remove("show");
+      strike.style.transform = "scaleX(0)";
+      currentPlayer = "X";
+      gameOver = false;
+    }
+  </script>
+</body>
+</html>
